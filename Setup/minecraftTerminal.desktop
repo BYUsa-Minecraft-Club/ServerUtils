@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=MinecraftTerminal
+Type=Application
+Comment=Access Minecraft Server
+Terminal=true
+Exec=<Util Directory>/ServerControl.py
+Icon=<Util Directory>/byuminecraft.png
+Categories=ConsoleOnly;System;
+GenericName=Process Viewer
+Keywords=system;process;task
