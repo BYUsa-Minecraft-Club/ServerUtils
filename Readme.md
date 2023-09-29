@@ -7,7 +7,6 @@
 
 
 ## Setting up
-Place all files in Server Scripts into the server's folder.
 Update launch server to properly have the server launch command
 In serverWrapper.py replace "<SERVER Path>" with the full path to the server folder (ie /home/byumc/Eden/)
 Run createFifos.sh (the one you copied to the server's folder). This will create serverInput and serverOutput in the server folder.
