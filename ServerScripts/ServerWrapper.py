@@ -2,7 +2,7 @@
 import time
 import os
 import subprocess
-with subprocess.Popen(["<SERVER Path>/launchServer.sh"],text=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin = subprocess.PIPE, cwd="<Server Path>") as proc:
+with subprocess.Popen(["<SERVER Path>/launchServer.sh"],text=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin = subprocess.PIPE) as proc:
     os.set_blocking(proc.stdout.fileno(), False)
     input = os.open("serverInput",os.O_RDONLY | os.O_NONBLOCK)
     try:
