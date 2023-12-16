@@ -3,7 +3,7 @@ import os
 import sys
 
 output = os.open("serverOutput", os.O_RDONLY)
-print("Server Console Opened")
+print("Server Console Opened [Use ctr + C to exit]")
 if os.fork() == 0:
     input = os.open("serverInput",os.O_WRONLY)
     while(True):

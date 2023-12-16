@@ -2,7 +2,7 @@
 import time
 import os
 import subprocess
-with subprocess.Popen(["<SERVER Path>/launchServer.sh"],text=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin = subprocess.PIPE) as proc:
+with subprocess.Popen(["/home/byumc/ServerUtils/ServerScripts/launchServer.sh"],text=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin = subprocess.PIPE) as proc:
     os.set_blocking(proc.stdout.fileno(), False)
     input = os.open("serverInput",os.O_RDONLY | os.O_NONBLOCK)
     try:
@@ -21,7 +21,7 @@ with subprocess.Popen(["<SERVER Path>/launchServer.sh"],text=False, stdout=subpr
         readline = proc.stdout.readline()
         try:
             if output == None:
-               output = os.open("testOut", os.O_WRONLY | os.O_NONBLOCK)
+               output = os.open("serverOutput", os.O_WRONLY | os.O_NONBLOCK)
             os.write(output, readline)
         except OSError:
             if output != None:

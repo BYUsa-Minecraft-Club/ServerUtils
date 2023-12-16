@@ -9,7 +9,7 @@ output = os.open("serverOutput", os.O_RDONLY | os.O_NONBLOCK)
 
 minutesToRestart = 5
 
-string = f"/say Server Restarting in {minutesToRestart} minutes\n"
+string = f"/say I'm restarting in about {minutesToRestart} minutes\n"
 os.write(input, bytes(string, 'utf-8'))
 
 time_end = time.time() + 60* minutesToRestart
@@ -19,7 +19,7 @@ while time.time() < time_end:
     try:
         line = prettyOpen.readline();
         if "logged in with entity id" in line:
-            string = f"/say Server Restarting in {round((time_end-time.time())/60)} minutes\n"
+            string = f"/say Hey (ENTER NAME HERE), I'm restarting in about {round((time_end-time.time())/60)} minutes\n"
             os.write(input, bytes(string, 'utf-8'))
     except BlockingIOError:
         line = b""

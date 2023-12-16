@@ -5,21 +5,24 @@ import subprocess
 
 def startServer():
    print("Starting Server")
+   serverStatusLabel.configure(text="Server Starting")
    os.system('sudo systemctl start minecraft.service')
    print("Started Server")
 
 def stopServer():
     print("Stopping Server")
+    serverStatusLabel.configure(text="Stoping Server")
     os.system('sudo systemctl stop minecraft.service')
     print("Stopped Server")
 
 def restartServer():
     print("Restarting Server")
-    os.system('systemctl restart minecraft.service')
+    serverStatusLabel.configure(text="Restarting Server")
+    os.system('sudo systemctl restart minecraft.service')
     print("Restarted Server")
     
 def launchServerConsole():
-    subprocess.call(['gnome-terminal', '--', '/home/garrett/Downloads/testSever/terminal.py'], cwd='/home/garrett/Downloads/testSever/')
+    subprocess.call(['gnome-terminal', '--title="Server Console"', '--', '/home/byumc/ServerUtils/ServerScripts/terminal.py'], cwd='/home/byumc/ServerUtils/ServerScripts')
 
 def updatePeriodic():
 	output = os.popen("systemctl status minecraft.service")
@@ -31,7 +34,7 @@ def updatePeriodic():
 
 
 window = tk.Tk()
-greeting = tk.Label(text="Greetings, Minecrafter")
+greeting = tk.Label(text="Greetings, Admin!")
 greeting.pack()
 serverStatusLabel = tk.Label(text="Server Status: ")
 serverStatusLabel.pack()

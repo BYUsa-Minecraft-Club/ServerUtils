@@ -2,7 +2,7 @@
 Type=simple
 ExecStart=python3 ServerWrapper.py
 ExecStop=python3 closeServer.py
-WorkingDirectory=<Server Directory>
+WorkingDirectory=/home/byumc/ServerUtils/ServerScripts
 User=byumc
 Restart=always
 
