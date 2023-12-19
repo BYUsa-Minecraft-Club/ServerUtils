@@ -12,6 +12,7 @@ buttonHeight = 2
 class Server:
     def __init__(self, serverConfig:servers.ServerConfig) -> None:
        self.serverConfig = serverConfig
+       self.serviceName = serverConfig.name+".service"
 
     def setupServerUI(self, root):
         print("building server UI")
@@ -43,7 +44,7 @@ class Server:
         mainFrame.pack(side="left")
 
     def updateStatus(self):
-        # output = os.popen("systemctl status minecraft.service")
+       # output = os.popen(f"systemctl status {self.serviceName}")
         # if(output.read().find("active (running)") > 0):
         self.serverStatusLabel.configure(text="On", fg="green")
         # else:
@@ -52,30 +53,30 @@ class Server:
 
 def startServer(server):
    print(f"Starting Server {server.serverConfig.displayName}")
-  # os.system('sudo systemctl start minecraft.service')
+   os.system(f'sudo systemctl start {server.serviceName}.service')
    server.serverStatusLabel.configure(text="Server Starting")
    print("Started Server")
 
 def stopServer(server):
     print(f"Stopping Server {server.serverConfig.displayName}")
-   # os.system('sudo systemctl stop minecraft.service')
+    os.system(f'sudo systemctl stop {server.serviceName}.service')
     server.serverStatusLabel.configure(text="Stoping Server")
     print("Stopped Server")
 
 def restartServer(server):
     print(f"Restarting Server {server.serverConfig.displayName}")
-   # os.system('systemctl restart minecraft.service')
+    os.system(f'systemctl restart {server.serviceName}.service')
     server.serverStatusLabel.configure(text="Restarting Server")
     print("Restarted Server")
     
 def launchServerConsole(server):
     pass
-    #subprocess.call(['gnome-terminal', '--', '/home/garrett/Downloads/testSever/terminal.py'], cwd='/home/garrett/Downloads/testSever/')
+    subprocess.call(['gnome-terminal', '--', '/home/resolute/ServerUtils/ServerScripts/terminal.py', "--server", server.serverConfig.name], cwd='/home/resolute/ServerUtils')
 
-def updatePeriodic():
+def updatePeriodic(window):
     for server in serverList:
         server.updateStatus()
-    window.after(1000, updatePeriodic)
+    window.after(1000, updatePeriodic, window)
 
 
 def main():
@@ -97,7 +98,7 @@ def main():
             frame = tk.Frame(window, background=backgroundColor)
             frame.pack(side="top")
 
-    window.after(1000, updatePeriodic)
+    window.after(1000, updatePeriodic, window)
     window.mainloop()
 
 if __name__ == "__main__":
