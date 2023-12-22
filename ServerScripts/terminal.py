@@ -6,6 +6,7 @@ import atexit
 import threading
 import argparse
 
+port = "/tmp/server.socket"
 
 def inputLoop(sock):
     while True:
@@ -24,10 +25,9 @@ def main():
     parser = argparse.ArgumentParser(prog="closeServer.py", description="Server Closer")
     parser.add_argument("--server", "-s", type=str, default="server") 
     args = parser.parse_args() 
-    port = "/tmp/" + args.server + ".socket"
-
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect(port)
+    sock.sendall(f"console {args.server}\n".encode())
     atexit.register(closeSocket, sock)
 
     print("Server Console Opened [Use ctr + C to exit]")

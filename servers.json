@@ -1,0 +1,46 @@
+[
+    {
+        "name": "hun",
+        "displayName": "Hub",
+        "folder": "/home/resolute/minecrafttesting/server1",
+        "launchCmd": "./start.sh",
+        "stopCmd": "/stop",
+        "start": false
+    },
+    {
+        "name": "eden",
+        "displayName": "Eden",
+        "folder": "/home/resolute/minecrafttesting/server2",
+        "launchCmd": "./start.sh",
+        "start": false
+    },
+    {
+        "name": "campus",
+        "displayName": "Campus Creative",
+        "folder": "/home/resolute/minecrafttesting/server1",
+        "launchCmd": "./start.sh",
+        "start": false
+    },
+    {
+        "name": "babylon",
+        "displayName": "Babylon",
+        "folder": "/home/resolute/minecrafttesting/server2",
+        "launchCmd": "./start.sh",
+        "start": false
+    },
+    {
+        "name": "creative",
+        "displayName": "Cosmo's Creative",
+        "folder": "/home/resolute/minecrafttesting/server1",
+        "launchCmd": "./start.sh",
+        "start": false
+    },
+    {
+        "name": "clubnight",
+        "displayName": "Club World",
+        "folder": "/home/resolute/minecrafttesting/server2",
+        "launchCmd": "./start.sh",
+        "start": false
+    }
+
+]
