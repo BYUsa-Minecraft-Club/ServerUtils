@@ -1,8 +1,8 @@
 [Service]
 Type=simple
 ExecStart=python3 ServerWrapper.py
-WorkingDirectory=/home/minecraft/BYU_Servers/ServerControlScripts
-User=minecraft
+WorkingDirectory=/home/byumc/BYU_Servers/ServerControlScripts
+User=byumc
 Restart=always
 TimeoutStopSec=30
 KillMode = mixed
