@@ -5,15 +5,23 @@ import re
 import argparse
 import socket
 import threading
+import atexit
 
 parser = argparse.ArgumentParser(prog="closeServer.py", description="Server Closer")
 parser.add_argument("--server", "-s", type=str, default="server") 
 args = parser.parse_args() 
-port = "/tmp/" + args.server + ".socket"
+port = "/tmp/server.socket"
+
 
 print("stoping server\n")
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 sock.connect(port)
+
+def closeSocket(sock):
+    sock.close()
+    
+sock.sendall(f"console {args.server}\n".encode())
+atexit.register(closeSocket, sock)
 
 minutesToRestart = 1
 
