@@ -120,7 +120,7 @@ class ServerWrapperServer(Server):
         if(output.read().find("active (running)") > 0):
             self.serverStatusLabel.configure(text="On", fg="green")
         else:
-            self.serverStatusLabel.configure(text="On", fg="red")
+            self.serverStatusLabel.configure(text="Off", fg="red")
         print(f"updating server status {self.serverConfig.displayName}")
 
     def startServer(self):
@@ -145,7 +145,7 @@ def updatePeriodic(window):
     try:
         serverStatus = getServerStatus()
     except Exception as e:
-        serverStatus = []
+        serverStatus = {}
     for server in serverList:
         server.updateStatus(serverStatus)
     

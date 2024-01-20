@@ -1,10 +1,10 @@
 [Service]
 Type=simple
 ExecStart=python3 ServerWrapper.py
-ExecStop=python3 ServerScripts/closeServer.py
 WorkingDirectory=/home/minecraft/BYU_Servers/ServerControlScripts
 User=minecraft
 Restart=always
-
+TimeoutStopSec=30
+KillMode = mixed
 [Install]
 WantedBy=multi-user.target

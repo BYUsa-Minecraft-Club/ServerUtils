@@ -33,13 +33,14 @@ socketLock = threading.Lock()
 
 def watchForPlayersEnterring(socket):
     prettyOpen = sock.makefile()
-    line = prettyOpen.readline()
-    match = re.match(r".* (?P<username>\w+)\[.*\] logged in with entity id", line)
-    if match:
-        string = f"/say Hey {match.group('username')}, I'm restarting in about {round((time_end-time.time())/60)} minutes\n"
-        socketLock.acquire()
-        sock.sendall(string.encode())
-        socketLock.release()
+    while True:
+        line = prettyOpen.readline()
+        match = re.match(r".* (?P<username>\w+)\[.*\] logged in with entity id", line)
+        if match:
+            string = f"/say Hey {match.group('username')}, I'm restarting in about {round((time_end-time.time())/60)} minutes\n"
+            socketLock.acquire()
+            sock.sendall(string.encode())
+            socketLock.release()
 
 thread = threading.Thread(target = watchForPlayersEnterring, args=(sock,), daemon=True)
 thread.start()
