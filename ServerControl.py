@@ -140,9 +140,12 @@ class ServerWrapperServer(Server):
         print("Restarted Server")
 
 def updatePeriodic(window):
-    serverStatus = getServerStatus()
-    for server in serverList:
-        server.updateStatus(serverStatus)
+    try:
+        serverStatus = getServerStatus()
+        for server in serverList:
+            server.updateStatus(serverStatus)
+    except Exception as e:
+        print(str(e))
     window.after(1000, updatePeriodic, window)
 
 
