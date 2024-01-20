@@ -11,6 +11,7 @@ import utils.serverConfig as serverConfig
 import shlex
 import argparse
 import json
+import signal
 
 openSockets: 'dict[str, list[socket.socket]]' = dict()
 socketListLock: 'dict[str, threading.Lock]' = dict()
@@ -21,6 +22,30 @@ socketServer = None
 openProcess  = dict()
 serverStatus = dict()
 serverThreads = dict()
+
+wrapperStop = False
+def catchSigTerm(signmum, frame):
+    logging.info("recieved Sig term")
+    for server in serverStatus:
+        if(serverStatus[server] != "OFF"):
+            writeToServer(server, b"/say Stoping Server\n")
+    time.sleep(5)
+    for server in serverStatus:
+        if(serverStatus[server] != "OFF"):
+            serverStatus[server] = "STOPPING"
+            sendStopCommand(server)
+    try:
+        for proccess in openProcess:
+            openProcess[proccess].wait(timeout=4)
+    except subprocess.TimeoutExpired:
+        logging.error("Timeout occured on stop")
+    for proccess in openProcess:
+        if(openProcess[proccess] and openProcess[proccess].poll()):
+            openProcess[proccess].terminate()
+    exit(0)
+
+signal.signal(signal.SIGTERM, catchSigTerm)
+
 
 class InvalidCommandException (Exception):
     def __init__(self, *args: object) -> None:
@@ -149,6 +174,8 @@ def sendToAllListeningSockets(serverName: str, output: bytes):
 
 def runSocketServer():
     global socketServer
+    if(os.path.exists(port)):
+        os.unlink(port)
     with socketserver.ThreadingUnixStreamServer(port, SocketHandler) as socketServer:
         atexit.register(closeSocketServer, port)
         socketServer.serve_forever()
