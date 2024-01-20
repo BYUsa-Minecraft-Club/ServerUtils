@@ -149,6 +149,8 @@ def sendToAllListeningSockets(serverName: str, output: bytes):
 
 def runSocketServer():
     global socketServer
+    if(os.path.exists(port)):
+        os.unlink(port)
     with socketserver.ThreadingUnixStreamServer(port, SocketHandler) as socketServer:
         atexit.register(closeSocketServer, port)
         socketServer.serve_forever()

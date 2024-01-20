@@ -1,9 +1,9 @@
 [Service]
 Type=simple
 ExecStart=python3 ServerWrapper.py
-ExecStop=python3 closeServer.py
-WorkingDirectory=/home/byumc/ServerUtils/ServerScripts
-User=byumc
+ExecStop=python3 ServerScripts/closeServer.py
+WorkingDirectory=/home/minecraft/BYU_Servers/ServerControlScripts
+User=minecraft
 Restart=always
 
 [Install]

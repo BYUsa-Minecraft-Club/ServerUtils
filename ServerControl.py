@@ -72,6 +72,12 @@ class Server:
        # output = os.popen(f"systemctl status {self.serviceName}")
         # if(output.read().find("active (running)") > 0):
         self.serverStatusLabel.configure(text=serverStatus[self.serverConfig.name])
+        if(serverStatus[self.serverConfig.name] == "ON"):
+            self.serverStatusLabel.configure(fg="green")
+        elif serverStatus[self.serverConfig.name] == "OFF":
+            self.serverStatusLabel.configure(fg="red")
+        else:
+            self.serverStatusLabel.config(fg="blue")
         # else:
         #  serverStatusLabel.configure(text="Server Status: Off")
         print(f"updating server status {self.serverConfig.displayName}")
@@ -98,7 +104,7 @@ class Server:
         print("Restarted Server")
     
     def launchServerConsole(self):
-        subprocess.call(['gnome-terminal', '--', '/home/resolute/ServerUtils/ServerScripts/terminal.py', "--server", self.serverConfig.name], cwd='/home/resolute/ServerUtils')
+        subprocess.call(['gnome-terminal', '--', '/home/minecraft/BYU_Servers/ServerControlScripts/ServerScripts/terminal.py', "--server", self.serverConfig.name], cwd='/home/minecraft/BYU_Servers/ServerControlScripts')
 
     
 

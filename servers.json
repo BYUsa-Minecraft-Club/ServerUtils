@@ -1,8 +1,8 @@
 [
     {
-        "name": "hun",
+        "name": "hub",
         "displayName": "Hub",
-        "folder": "/home/resolute/minecrafttesting/server1",
+        "folder": "/home/minecraft/BYU_Servers/server1",
         "launchCmd": "./start.sh",
         "stopCmd": "/stop",
         "start": false
@@ -10,7 +10,7 @@
     {
         "name": "eden",
         "displayName": "Eden",
-        "folder": "/home/resolute/minecrafttesting/server2",
+        "folder": "/home/minecraft/BYU_Servers/server2",
         "launchCmd": "./start.sh",
         "start": false
     },
