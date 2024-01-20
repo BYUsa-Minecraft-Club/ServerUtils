@@ -16,6 +16,8 @@ def inputLoop(sock):
 def outputLoop(sock):
     while True:
         data = sock.recv(4096)
+        if not data:
+           break
         sys.stdout.write(data.decode())
 
 def closeSocket(sock):
