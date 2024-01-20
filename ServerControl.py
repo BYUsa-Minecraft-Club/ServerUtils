@@ -71,6 +71,8 @@ class Server:
     def updateStatus(self, serverStatus):
        # output = os.popen(f"systemctl status {self.serviceName}")
         # if(output.read().find("active (running)") > 0):
+        if not self.serverConfig.name in serverStatus:
+            serverStatus[self.serverConfig.name] = "Unknown"
         self.serverStatusLabel.configure(text=serverStatus[self.serverConfig.name])
         if(serverStatus[self.serverConfig.name] == "ON"):
             self.serverStatusLabel.configure(fg="green")
@@ -142,10 +144,11 @@ class ServerWrapperServer(Server):
 def updatePeriodic(window):
     try:
         serverStatus = getServerStatus()
-        for server in serverList:
-            server.updateStatus(serverStatus)
     except Exception as e:
-        print(str(e))
+        serverStatus = []
+    for server in serverList:
+        server.updateStatus(serverStatus)
+    
     window.after(1000, updatePeriodic, window)
 
 
