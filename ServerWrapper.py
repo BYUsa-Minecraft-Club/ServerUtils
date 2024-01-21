@@ -53,7 +53,7 @@ class InvalidCommandException (Exception):
 
 class SocketHandler (socketserver.BaseRequestHandler):
     def handle(self):
-        logging.info(f"new socket connection from {self.client_address}")
+        #logging.info(f"new socket connection from {self.client_address}")
     
         self.sockIn = self.request.makefile()
         self.active = True
@@ -79,7 +79,7 @@ class SocketHandler (socketserver.BaseRequestHandler):
             except InvalidCommandException as e:
                 self.request.sendall(str(e).encode()+b"\n")
 
-        logging.info(f"closed connection from {self.client_address}")
+        #logging.info(f"closed connection from {self.client_address}")
         
 
     def startServer(self, cmdArgs):
@@ -147,8 +147,8 @@ class SocketHandler (socketserver.BaseRequestHandler):
                 break
             writeToServer(server, line.encode())
         socketListLock[server].acquire()
-        if self.request in openSockets:
-            openSockets.remove(self.request)
+        if self.request in openSockets[server]:
+            openSockets[server].remove(self.request)
         socketListLock[server].release()
 
 
@@ -200,9 +200,12 @@ def launchServer(serverInfo:serverConfig.ServerConfig):
             serverStatus[serverInfo.name] = "ON"
             #os.set_blocking(proc.stdout.fileno(), False)
             while proc.poll() == None:
-                readline = proc.stdout.readline()
-                logging.info(f"{serverInfo.name}: {readline}")
-                sendToAllListeningSockets(serverInfo.name, readline)
+                try:
+                    readline = proc.stdout.readline()
+                    logging.info(f"{serverInfo.name}: {readline}")
+                    sendToAllListeningSockets(serverInfo.name, readline)
+                except Exception as e:
+                    print(f"recieved exception {serverInfo.name} io: {str(e)}")
             retCode = proc.poll()
             print(f"{serverInfo.name} ended with return code {retCode}")
             openProcess[serverInfo.name] = None
