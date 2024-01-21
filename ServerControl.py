@@ -106,7 +106,7 @@ class Server:
         print("Restarted Server")
     
     def launchServerConsole(self):
-        subprocess.call(['gnome-terminal', '--', '/home/minecraft/BYU_Servers/ServerControlScripts/ServerScripts/terminal.py', "--server", self.serverConfig.name], cwd='/home/minecraft/BYU_Servers/ServerControlScripts')
+        subprocess.call(['gnome-terminal', '--', '/home/byumc/BYU_Servers/ServerControlScripts/ServerScripts/terminal.py', "--server", self.serverConfig.name], cwd='/home/byumc/BYU_Servers/ServerControlScripts')
 
     
 

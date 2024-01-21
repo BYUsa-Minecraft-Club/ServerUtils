@@ -4,14 +4,14 @@
         "displayName": "Eden",
         "folder": "/home/byumc/BYU_Servers/Eden",
         "launchCmd": "./start.sh",
-        "start": false
+        "start": true
     },
     {
         "name": "campus",
         "displayName": "Campus Creative",
         "folder": "/home/byumc/BYU_Servers/Campus",
         "launchCmd": "./start.sh",
-        "start": false
+        "start": true
     },
     {
         "name": "babylon",
