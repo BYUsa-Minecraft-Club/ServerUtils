@@ -7,8 +7,8 @@ import socket
 import threading
 import atexit
 
-parser = argparse.ArgumentParser(prog="closeServer.py", description="Server Closer")
-parser.add_argument("--server", "-s", type=str, default="server") 
+parser = argparse.ArgumentParser(prog="warnofRestart.py", description="Warns server of restart")
+parser.add_argument("--server", "-s", type=str, default="server name", required=True) 
 args = parser.parse_args() 
 port = "/tmp/server.socket"
 
@@ -19,11 +19,11 @@ sock.connect(port)
 
 def closeSocket(sock):
     sock.close()
-    
+
 sock.sendall(f"console {args.server}\n".encode())
 atexit.register(closeSocket, sock)
 
-minutesToRestart = 1
+minutesToRestart = 5
 
 string = f"/say I'm restarting in about {minutesToRestart} minutes\n"
 sock.sendall(string.encode())
