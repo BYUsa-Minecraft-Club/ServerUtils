@@ -6,6 +6,7 @@ Comment=Access Minecraft Server
 Terminal=true
 Exec=/home/byumc/BYU_Servers/ServerControlScripts/ServerControl.py
 Icon=/home/byumc/BYU_Servers/ServerControlScripts/byuminecraft.png
+Path=/home/byumc/BYU_Servers/ServerControlScripts
 Categories=ConsoleOnly;System;
 GenericName=Process Viewer
 Keywords=system;process;task
