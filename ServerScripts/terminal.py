@@ -29,7 +29,8 @@ def main():
     args = parser.parse_args() 
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect(port)
-    sock.sendall(f"console {args.server}\n".encode())
+    if args.server != "server":
+        sock.sendall(f"console {args.server}\n".encode())
     atexit.register(closeSocket, sock)
 
     print("Server Console Opened [Use ctr + C to exit]")
