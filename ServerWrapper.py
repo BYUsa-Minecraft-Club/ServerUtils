@@ -14,7 +14,7 @@ import json
 import signal
 
 startUpDelaySeconds = 5*60
-shutdownWaitTimeSeconds = 4
+shutdownWaitTimeSeconds = 20
 
 openSockets: "dict[str, list[socket.socket]]" = dict()
 socketListLock: "dict[str, threading.Lock]" = dict()
@@ -45,7 +45,7 @@ def catchSigTerm(signmum, frame):
                 target=waitForServerToStop, args=(server,), daemon=True
             )
             waitingThreads[server].start()
-    for server in serverStatus:
+    for server in waitingThreads:
         waitingThreads[server].join()
     exit(0)
 
@@ -92,14 +92,14 @@ class SocketHandler(socketserver.BaseRequestHandler):
 
     def printHelp(self, cmdArgs):
         self.request.sendall(
-            "This is the BYU minecraft server controller interface\n" +
+            ("This is the BYU minecraft server controller interface\n" +
             "COMMANDS: \n" +
             "start [serverName]... - starts the specified server(s) (or all if none specified)\n" +
             "stop [serverName]... - stops the specified server(s) (or all if none specified)\n" +
             "restart [serverName]... - restarts the specified server(s) (or all currently online servers if none specified)\n" +
             "status - returns the status of all servers\n" + 
             "console [serverName] - opens the server console of specified server\n" +
-            "help - displays this help message"
+            "help - displays this help message\n").encode()
         )
 
     def startServer(self, cmdArgs):
@@ -233,7 +233,7 @@ def waitForServerToStop(serverName):
         except subprocess.TimeoutExpired:
             logging.error(f"Timeout occured on stop server {serverName}")
         if openProcess[serverName] and openProcess[serverName].poll() == None:
-            serverStatus[serverName] = "Killing"
+            #serverStatus[serverName] = "Killing"
             logging.error(f"{serverName} sending terminate signal")
             openProcess[serverName].terminate()
 
