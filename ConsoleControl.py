@@ -34,7 +34,7 @@ def getServerStatus():
 def main():
     parser = argparse.ArgumentParser(prog="ConsolControl")
     parser.add_argument("operation", type=str, choices=["start", "stop", "restart", "status", "console"], nargs=1,)
-    parser.add_argument("server", type=str, choices=[x.name for x in serverConfigs]+["wrapper"], nargs='+')
+    parser.add_argument("server", type=str, choices=[x.name for x in serverConfigs]+["wrapper",""], nargs='*',default="")
     args = parser.parse_args()
     operation = args.operation[0]
     if  "wrapper" in args.server:
