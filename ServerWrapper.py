@@ -13,6 +13,9 @@ import argparse
 import json
 import signal
 
+startUpDelaySeconds = 5*60
+shutdownWaitTimeSeconds = 4
+
 openSockets: "dict[str, list[socket.socket]]" = dict()
 socketListLock: "dict[str, threading.Lock]" = dict()
 serverInputLock: "dict[str, threading.Lock]" = dict()
@@ -26,24 +29,24 @@ serverThreads = dict()
 wrapperStop = False
 
 
+
 def catchSigTerm(signmum, frame):
     logging.info("recieved Sig term")
     for server in serverStatus:
         if serverStatus[server] != "OFF":
             writeToServer(server, b"/say Stoping Server\n")
     time.sleep(5)
+    waitingThreads = {}
     for server in serverStatus:
         if serverStatus[server] != "OFF":
             serverStatus[server] = "STOPPING"
             sendStopCommand(server)
-    try:
-        for proccess in openProcess:
-            openProcess[proccess].wait(timeout=4)
-    except subprocess.TimeoutExpired:
-        logging.error("Timeout occured on stop")
-    for proccess in openProcess:
-        if openProcess[proccess] and openProcess[proccess].poll() == None:
-            openProcess[proccess].terminate()
+            waitingThreads[server] = threading.Thread(
+                target=waitForServerToStop, args=(server,), daemon=True
+            )
+            waitingThreads[server].start()
+    for server in serverStatus:
+        waitingThreads[server].join()
     exit(0)
 
 
@@ -115,16 +118,7 @@ class SocketHandler(socketserver.BaseRequestHandler):
             startNewServer(serverInfoMap[server])
         self.request.sendall(b"started server\n")
 
-    def waitForServerToStop(self, serverName):
-        logging.info("waiting for server to stop")
-        try:
-            openProcess[serverName].wait(timeout=4)
-        except subprocess.TimeoutExpired:
-            logging.error("Timeout occured on stop")
-        if openProcess[serverName] and openProcess[serverName].poll() == None:
-            logging.error("sending terminate signal")
-            openProcess[serverName].terminate()
-            self.request.sendall(b"Server Unresponsive Killing\n")
+    
 
     def stopServer(self, cmdArgs):
         targetServers = []
@@ -141,7 +135,7 @@ class SocketHandler(socketserver.BaseRequestHandler):
             serverStatus[server] = "STOPPING"
             sendStopCommand(server)
             threading.Thread(
-                target=self.waitForServerToStop, args=(server,), daemon=True
+                target=waitForServerToStop, args=(server,), daemon=True
             ).start()
         self.request.sendall(b"stopping server\n")
 
@@ -157,8 +151,8 @@ class SocketHandler(socketserver.BaseRequestHandler):
                 raise InvalidCommandException(f"unknown server: {server}")
             serverStatus[server] = "RESTARTING"
             threading.Thread(
-                target=self.waitForServerToStop, args=(self, server), daemon=True
-            )
+                target=waitForServerToStop, args=(server,), daemon=True
+            ).start()
             sendStopCommand(server)
         self.request.sendall(b"Restarting Servers\n")
 
@@ -232,6 +226,17 @@ def sendStopCommand(serverName: str):
     serverinfo = serverInfoMap[serverName]
     writeToServer(serverName, (serverinfo.stopCmd + "\n").encode())
 
+def waitForServerToStop(serverName):
+        logging.info(f"waiting for server {serverName} to stop")
+        try:
+            openProcess[serverName].wait(timeout=shutdownWaitTimeSeconds)
+        except subprocess.TimeoutExpired:
+            logging.error(f"Timeout occured on stop server {serverName}")
+        if openProcess[serverName] and openProcess[serverName].poll() == None:
+            serverStatus[serverName] = "Killing"
+            logging.error(f"{serverName} sending terminate signal")
+            openProcess[serverName].terminate()
+
 
 def launchServer(serverInfo: serverConfig.ServerConfig):
     while True:
@@ -281,6 +286,6 @@ for server in serverInfoList:
     serverStatus[server.name] = "OFF"
     if server.start:
         startNewServer(server)
-        time.sleep(30)
+        time.sleep(startUpDelaySeconds)
 
 runSocketServer()
