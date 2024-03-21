@@ -13,25 +13,27 @@ import argparse
 import json
 import signal
 
-openSockets: 'dict[str, list[socket.socket]]' = dict()
-socketListLock: 'dict[str, threading.Lock]' = dict()
-serverInputLock: 'dict[str, threading.Lock]' = dict()
+openSockets: "dict[str, list[socket.socket]]" = dict()
+socketListLock: "dict[str, threading.Lock]" = dict()
+serverInputLock: "dict[str, threading.Lock]" = dict()
 
 port = "/tmp/server.socket"
 socketServer = None
-openProcess  = dict()
+openProcess = dict()
 serverStatus = dict()
 serverThreads = dict()
 
 wrapperStop = False
+
+
 def catchSigTerm(signmum, frame):
     logging.info("recieved Sig term")
     for server in serverStatus:
-        if(serverStatus[server] != "OFF"):
+        if serverStatus[server] != "OFF":
             writeToServer(server, b"/say Stoping Server\n")
     time.sleep(5)
     for server in serverStatus:
-        if(serverStatus[server] != "OFF"):
+        if serverStatus[server] != "OFF":
             serverStatus[server] = "STOPPING"
             sendStopCommand(server)
     try:
@@ -40,21 +42,23 @@ def catchSigTerm(signmum, frame):
     except subprocess.TimeoutExpired:
         logging.error("Timeout occured on stop")
     for proccess in openProcess:
-        if(openProcess[proccess] and openProcess[proccess].poll()):
+        if openProcess[proccess] and openProcess[proccess].poll():
             openProcess[proccess].terminate()
     exit(0)
+
 
 signal.signal(signal.SIGTERM, catchSigTerm)
 
 
-class InvalidCommandException (Exception):
+class InvalidCommandException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-class SocketHandler (socketserver.BaseRequestHandler):
+
+class SocketHandler(socketserver.BaseRequestHandler):
     def handle(self):
-        #logging.info(f"new socket connection from {self.client_address}")
-    
+        # logging.info(f"new socket connection from {self.client_address}")
+
         self.sockIn = self.request.makefile()
         self.active = True
         while self.active:
@@ -74,29 +78,51 @@ class SocketHandler (socketserver.BaseRequestHandler):
                     self.getServerStatus(cmdArgs)
                 elif cmdArgs[0] == "console":
                     self.launchServerConsole(cmdArgs)
+                elif cmdArgs[0] == "help":
+                    self.printHelp(cmdArgs)
                 else:
                     raise InvalidCommandException(f"unknown command: {cmdArgs[0]}")
             except InvalidCommandException as e:
-                self.request.sendall(str(e).encode()+b"\n")
+                self.request.sendall(str(e).encode() + b"\n")
 
-        #logging.info(f"closed connection from {self.client_address}")
-        
+        # logging.info(f"closed connection from {self.client_address}")
+
+    def printHelp(self, cmdArgs):
+        self.request.sendall(
+            "This is the BYU minecraft server controller interface\n" +
+            "COMMANDS: \n" +
+            "start [serverName]... - starts the specified server(s) (or all if none specified)\n" +
+            "stop [serverName]... - stops the specified server(s) (or all if none specified)\n" +
+            "restart [serverName]... - restarts the specified server(s) (or all currently online servers if none specified)\n" +
+            "status - returns the status of all servers\n" + 
+            "console [serverName] - opens the server console of specified server\n" +
+            "help - displays this help message"
+        )
 
     def startServer(self, cmdArgs):
         serversToStart = []
         if len(cmdArgs) > 1:
             serversToStart = cmdArgs[1:]
         else:
-            serversToStart = [x for x in serverStatus if serverStatus[x] == "ON"]
+            serversToStart = [x for x in serverStatus if serverStatus[x] == "OFF"]
 
         for server in serversToStart:
-            if(server not in serverStatus):
+            if server not in serverStatus:
                 raise InvalidCommandException(f"unknown server: {server}")
+            if serverStatus[server] != "OFF":
+                raise InvalidCommandException(f"Server {server} already started")
             serverStatus[server] = "STARTING"
             startNewServer(serverInfoMap[server])
         self.request.sendall(b"started server\n")
 
-
+    def waitForServerToStop(self, serverName):
+        try:
+            openProcess[serverName].wait(timeout=4)
+        except subprocess.TimeoutExpired:
+            logging.error("Timeout occured on stop")
+        if openProcess[serverName] and openProcess[serverName].poll():
+            openProcess[serverName].terminate()
+            self.request.sendall(b"Server Unresponsive Killing\n")
 
     def stopServer(self, cmdArgs):
         targetServers = []
@@ -106,12 +132,16 @@ class SocketHandler (socketserver.BaseRequestHandler):
             targetServers = [x for x in serverStatus if serverStatus[x] == "ON"]
 
         for server in targetServers:
-            if(server not in serverStatus):
+            if server not in serverStatus:
                 raise InvalidCommandException(f"unknown server: {server}")
+            if serverStatus[server] == "OFF":
+                raise InvalidCommandException(f"Cannot stop Server {server}: server already offline")
             serverStatus[server] = "STOPPING"
             sendStopCommand(server)
+            threading.Thread(
+                target=self.waitForServerToStop, args=(self, server), daemon=True
+            )
         self.request.sendall(b"stopping server\n")
-
 
     def restartServer(self, cmdArgs):
         targetServers = []
@@ -121,22 +151,24 @@ class SocketHandler (socketserver.BaseRequestHandler):
             targetServers = [x for x in serverStatus if serverStatus[x] == "ON"]
 
         for server in targetServers:
-            if(server not in serverStatus):
+            if server not in serverStatus:
                 raise InvalidCommandException(f"unknown server: {server}")
             serverStatus[server] = "RESTARTING"
+            threading.Thread(
+                target=self.waitForServerToStop, args=(self, server), daemon=True
+            )
             sendStopCommand(server)
         self.request.sendall(b"Restarting Servers\n")
 
-
     def getServerStatus(self, cmdArgs):
-        self.request.sendall(json.dumps(serverStatus).encode()) 
+        self.request.sendall(json.dumps(serverStatus).encode())
 
     def launchServerConsole(self, cmdArgs):
-        if(len(cmdArgs) != 2):
+        if len(cmdArgs) != 2:
             raise InvalidCommandException(f"unexpect arguments to command")
         server = cmdArgs[1]
-        if(server not in serverStatus):
-                raise InvalidCommandException(f"unknown server: {server}")
+        if server not in serverStatus:
+            raise InvalidCommandException(f"unknown server: {server}")
         socketListLock[server].acquire()
         openSockets[server].append(self.request)
         socketListLock[server].release()
@@ -172,33 +204,47 @@ def sendToAllListeningSockets(serverName: str, output: bytes):
                 openSockets[serverName].remove(sock)
             socketListLock[serverName].release()
 
+
 def runSocketServer():
     global socketServer
-    if(os.path.exists(port)):
+    if os.path.exists(port):
         os.unlink(port)
     with socketserver.ThreadingUnixStreamServer(port, SocketHandler) as socketServer:
         atexit.register(closeSocketServer, port)
         socketServer.serve_forever()
 
+
 def closeSocketServer(serverPort):
     socketServer.shutdown()
     os.unlink(serverPort)
 
+
 def startNewServer(server: serverConfig.ServerConfig):
-    serverThreads[server.name] = threading.Thread(target=launchServer, args=(server,), daemon=True)
+    serverThreads[server.name] = threading.Thread(
+        target=launchServer, args=(server,), daemon=True
+    )
     serverThreads[server.name].start()
+
 
 def sendStopCommand(serverName: str):
     serverinfo = serverInfoMap[serverName]
     writeToServer(serverName, (serverinfo.stopCmd + "\n").encode())
 
-def launchServer(serverInfo:serverConfig.ServerConfig):
+
+def launchServer(serverInfo: serverConfig.ServerConfig):
     while True:
         logging.info(f"launching server: {serverInfo.name}")
-        with subprocess.Popen(shlex.split(serverInfo.launchCmd),cwd=serverInfo.folder, text=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin = subprocess.PIPE) as proc:
+        with subprocess.Popen(
+            shlex.split(serverInfo.launchCmd),
+            cwd=serverInfo.folder,
+            text=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.PIPE,
+        ) as proc:
             openProcess[serverInfo.name] = proc
             serverStatus[serverInfo.name] = "ON"
-            #os.set_blocking(proc.stdout.fileno(), False)
+            # os.set_blocking(proc.stdout.fileno(), False)
             while proc.poll() == None:
                 try:
                     readline = proc.stdout.readline()
@@ -209,8 +255,13 @@ def launchServer(serverInfo:serverConfig.ServerConfig):
             retCode = proc.poll()
             print(f"{serverInfo.name} ended with return code {retCode}")
             openProcess[serverInfo.name] = None
-            sendToAllListeningSockets(serverInfo.name, f"{serverInfo.name} stopped with exit code {retCode}\n".encode())
-            if serverStatus[serverInfo.name] == "STOPPING": # don't restart if shutting down was intentional
+            sendToAllListeningSockets(
+                serverInfo.name,
+                f"{serverInfo.name} stopped with exit code {retCode}\n".encode(),
+            )
+            if (
+                serverStatus[serverInfo.name] == "STOPPING"
+            ):  # don't restart if shutting down was intentional
                 serverStatus[serverInfo.name] = "OFF"
                 break
             serverStatus[serverInfo.name] = "OFF"
@@ -219,14 +270,15 @@ def launchServer(serverInfo:serverConfig.ServerConfig):
 logging.basicConfig(level=logging.INFO)
 
 serverInfoList = serverConfig.getServerConfigs("servers.json")
-serverInfoMap:'dict[str:serverConfig.ServerConfig]' = dict()
+serverInfoMap: "dict[str:serverConfig.ServerConfig]" = dict()
 for server in serverInfoList:
     socketListLock[server.name] = threading.Lock()
     serverInputLock[server.name] = threading.Lock()
     openSockets[server.name] = []
     serverInfoMap[server.name] = server
     serverStatus[server.name] = "OFF"
-    if(server.start):
+    if server.start:
         startNewServer(server)
+        time.sleep(30)
 
 runSocketServer()
