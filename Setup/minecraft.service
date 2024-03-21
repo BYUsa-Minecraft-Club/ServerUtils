@@ -4,7 +4,7 @@ ExecStart=python3 ServerWrapper.py
 WorkingDirectory=/home/byumc/BYU_Servers/ServerControlScripts
 User=byumc
 Restart=always
-TimeoutStopSec=30
+TimeoutStopSec=360
 KillMode = mixed
 [Install]
 WantedBy=multi-user.target
