@@ -10,8 +10,6 @@ port = "/tmp/server.socket"
 serverConfigs = servers.getServerConfigs("servers.json")
 
 def sendCommandToServer(cmd: str):
-    print(f"sending '{cmd}'")
-    return ""
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect(port)
     sock.sendall(cmd.encode())
@@ -55,7 +53,10 @@ def main():
             print("Restarted Server")
         elif operation == "console":
             os.system("/home/byumc/BYU_Servers/ServerControlScripts/ServerScripts/terminal.py")
-
+    elif not os.path.exists(port):
+       print("server wrapper offline cannot execute command")
+       print("Run `./ConsoleControl.py start wrapper` to start wrapper")
+       exit(-1)
     elif operation == "status":
         status = getServerStatus()
         if args.server:
@@ -69,7 +70,7 @@ def main():
             print("can only open terminal for one server at a time\n")
             exit(-1)
         if args.server:
-            os.system("/home/byumc/BYU_Servers/ServerControlScripts/ServerScripts/terminal.py"+ " "+ args.server[0])
+            os.system("/home/byumc/BYU_Servers/ServerControlScripts/ServerScripts/terminal.py"+ " -s "+ args.server[0])
         else:
             os.system("/home/byumc/BYU_Servers/ServerControlScripts/ServerScripts/terminal.py")
     else:
@@ -78,7 +79,7 @@ def main():
         else:
            cmd = operation + "\n"
         result = sendCommandToServer(cmd)
-        print(result)
+        print(result.decode())
 
 if __name__ == "__main__":
     main()

@@ -14,7 +14,7 @@ import json
 import signal
 
 startUpDelaySeconds = 5*60
-shutdownWaitTimeSeconds = 20
+shutdownWaitTimeSeconds = 5*60
 
 openSockets: "dict[str, list[socket.socket]]" = dict()
 socketListLock: "dict[str, threading.Lock]" = dict()
@@ -239,7 +239,7 @@ def waitForServerToStop(serverName):
 
 
 def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
-    os.sleep(delay)
+    time.sleep(delay)
     while True:
         logging.info(f"launching server: {serverInfo.name}")
         with subprocess.Popen(
