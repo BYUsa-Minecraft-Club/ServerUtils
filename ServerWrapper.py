@@ -215,9 +215,9 @@ def closeSocketServer(serverPort):
     os.unlink(serverPort)
 
 
-def startNewServer(server: serverConfig.ServerConfig):
+def startNewServer(server: serverConfig.ServerConfig, delay):
     serverThreads[server.name] = threading.Thread(
-        target=launchServer, args=(server,), daemon=True
+        target=launchServer, args=(server,delay), daemon=True
     )
     serverThreads[server.name].start()
 
@@ -238,7 +238,8 @@ def waitForServerToStop(serverName):
             openProcess[serverName].terminate()
 
 
-def launchServer(serverInfo: serverConfig.ServerConfig):
+def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
+    os.sleep(delay)
     while True:
         logging.info(f"launching server: {serverInfo.name}")
         with subprocess.Popen(
@@ -278,6 +279,7 @@ logging.basicConfig(level=logging.INFO)
 
 serverInfoList = serverConfig.getServerConfigs("servers.json")
 serverInfoMap: "dict[str:serverConfig.ServerConfig]" = dict()
+i = 0
 for server in serverInfoList:
     socketListLock[server.name] = threading.Lock()
     serverInputLock[server.name] = threading.Lock()
@@ -285,7 +287,7 @@ for server in serverInfoList:
     serverInfoMap[server.name] = server
     serverStatus[server.name] = "OFF"
     if server.start:
-        startNewServer(server)
-        time.sleep(startUpDelaySeconds)
-
+        startNewServer(server, startUpDelaySeconds*i)
+        i +=1
+        
 runSocketServer()
