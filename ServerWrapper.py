@@ -42,7 +42,7 @@ def catchSigTerm(signmum, frame):
     except subprocess.TimeoutExpired:
         logging.error("Timeout occured on stop")
     for proccess in openProcess:
-        if openProcess[proccess] and openProcess[proccess].poll():
+        if openProcess[proccess] and openProcess[proccess].poll() == None:
             openProcess[proccess].terminate()
     exit(0)
 
@@ -116,11 +116,13 @@ class SocketHandler(socketserver.BaseRequestHandler):
         self.request.sendall(b"started server\n")
 
     def waitForServerToStop(self, serverName):
+        logging.info("waiting for server to stop")
         try:
             openProcess[serverName].wait(timeout=4)
         except subprocess.TimeoutExpired:
             logging.error("Timeout occured on stop")
-        if openProcess[serverName] and openProcess[serverName].poll():
+        if openProcess[serverName] and openProcess[serverName].poll() == None:
+            logging.error("sending terminate signal")
             openProcess[serverName].terminate()
             self.request.sendall(b"Server Unresponsive Killing\n")
 
@@ -139,8 +141,8 @@ class SocketHandler(socketserver.BaseRequestHandler):
             serverStatus[server] = "STOPPING"
             sendStopCommand(server)
             threading.Thread(
-                target=self.waitForServerToStop, args=(self, server), daemon=True
-            )
+                target=self.waitForServerToStop, args=(server,), daemon=True
+            ).start()
         self.request.sendall(b"stopping server\n")
 
     def restartServer(self, cmdArgs):
@@ -248,7 +250,7 @@ def launchServer(serverInfo: serverConfig.ServerConfig):
             while proc.poll() == None:
                 try:
                     readline = proc.stdout.readline()
-                    logging.info(f"{serverInfo.name}: {readline}")
+                    logging.debug(f"{serverInfo.name}: {readline}")
                     sendToAllListeningSockets(serverInfo.name, readline)
                 except Exception as e:
                     print(f"recieved exception {serverInfo.name} io: {str(e)}")
