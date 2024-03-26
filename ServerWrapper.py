@@ -215,7 +215,7 @@ def closeSocketServer(serverPort):
     os.unlink(serverPort)
 
 
-def startNewServer(server: serverConfig.ServerConfig, delay):
+def startNewServer(server: serverConfig.ServerConfig, delay=0):
     serverThreads[server.name] = threading.Thread(
         target=launchServer, args=(server,delay), daemon=True
     )
