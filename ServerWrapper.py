@@ -12,9 +12,13 @@ import shlex
 import argparse
 import json
 import signal
+import re
 
 startUpDelaySeconds = 5*60
-shutdownWaitTimeSeconds = 5*60
+shutdownWaitTimeSeconds = 5*60 # time to wait before soft kill
+killWaitTimeSeconds = 60  # time to wait after soft for hard kill
+
+startUpWaitTime = 5*60
 
 openSockets: "dict[str, list[socket.socket]]" = dict()
 socketListLock: "dict[str, threading.Lock]" = dict()
@@ -107,14 +111,14 @@ class SocketHandler(socketserver.BaseRequestHandler):
         if len(cmdArgs) > 1:
             serversToStart = cmdArgs[1:]
         else:
-            serversToStart = [x for x in serverStatus if serverStatus[x] == "OFF"]
+            serversToStart = [x for x in serverStatus if serverStatus[x]['text'] == "OFF"]
 
         for server in serversToStart:
             if server not in serverStatus:
                 raise InvalidCommandException(f"unknown server: {server}")
-            if serverStatus[server] != "OFF":
+            if serverStatus[server]['text'] != "OFF":
                 raise InvalidCommandException(f"Server {server} already started")
-            serverStatus[server] = "STARTING"
+            serverStatus[server]['text'] = "LAUNCHING"
             startNewServer(serverInfoMap[server])
         self.request.sendall(b"started server\n")
 
@@ -125,14 +129,15 @@ class SocketHandler(socketserver.BaseRequestHandler):
         if len(cmdArgs) > 1:
             targetServers = cmdArgs[1:]
         else:
-            targetServers = [x for x in serverStatus if serverStatus[x] == "ON"]
-
+            targetServers = [x for x in serverStatus if serverStatus[x]['text'] == "ON"]
+        
         for server in targetServers:
             if server not in serverStatus:
                 raise InvalidCommandException(f"unknown server: {server}")
-            if serverStatus[server] == "OFF":
+            if serverStatus[server]['text'] == "OFF":
                 raise InvalidCommandException(f"Cannot stop Server {server}: server already offline")
-            serverStatus[server] = "STOPPING"
+            serverStatus[server]['text'] = "STOPPING"
+            serverStatus[server]["stopping"] = True
             sendStopCommand(server)
             threading.Thread(
                 target=waitForServerToStop, args=(server,), daemon=True
@@ -144,12 +149,12 @@ class SocketHandler(socketserver.BaseRequestHandler):
         if len(cmdArgs) > 1:
             targetServers = cmdArgs[1:]
         else:
-            targetServers = [x for x in serverStatus if serverStatus[x] == "ON"]
+            targetServers = [x for x in serverStatus if serverStatus[x]['text'] == "ON"]
 
         for server in targetServers:
             if server not in serverStatus:
                 raise InvalidCommandException(f"unknown server: {server}")
-            serverStatus[server] = "RESTARTING"
+            serverStatus[server]['text'] = "RESTARTING"
             threading.Thread(
                 target=waitForServerToStop, args=(server,), daemon=True
             ).start()
@@ -157,7 +162,7 @@ class SocketHandler(socketserver.BaseRequestHandler):
         self.request.sendall(b"Restarting Servers\n")
 
     def getServerStatus(self, cmdArgs):
-        self.request.sendall(json.dumps(serverStatus).encode())
+        self.request.sendall(json.dumps(serverStatus['text']).encode())
 
     def launchServerConsole(self, cmdArgs):
         if len(cmdArgs) != 2:
@@ -228,15 +233,45 @@ def sendStopCommand(serverName: str):
 
 def waitForServerToStop(serverName):
         logging.info(f"waiting for server {serverName} to stop")
+        proccess = openProcess[serverName]
         try:
-            openProcess[serverName].wait(timeout=shutdownWaitTimeSeconds)
+            proccess.wait(timeout=shutdownWaitTimeSeconds)
+            return
         except subprocess.TimeoutExpired:
             logging.error(f"Timeout occured on stop server {serverName}")
-        if openProcess[serverName] and openProcess[serverName].poll() == None:
-            #serverStatus[serverName] = "Killing"
+        if proccess.poll() == None:
+            serverStatus[serverName]['text'] = "Terminating"
             logging.error(f"{serverName} sending terminate signal")
-            openProcess[serverName].terminate()
+            proccess.terminate()
+        try:
+            proccess.wait(timeout=killWaitTimeSeconds)
+            return
+        except subprocess.TimeoutExpired:
+            logging.error(f"Timeout occured on kill server {serverName}")
+        if proccess.poll() == None:
+            serverStatus[serverName]['text'] = "Killing"
+            logging.error(f"{serverName} sending terminate signal")
+            proccess.kill()
 
+def waitForServerStart(serverName: str):
+    time.sleep(startUpWaitTime)
+    if not serverStatus["text"] == "STARTING":
+        return # all is well
+    logging.error(f"{serverName} failed to start")
+    proccess = openProcess[serverName]
+    if proccess and proccess.poll() == None:
+            serverStatus[serverName]['text'] = "Terminating"
+            logging.error(f"{serverName} sending terminate signal")
+            proccess.terminate()
+    try:
+        proccess.wait(timeout=killWaitTimeSeconds)
+        return
+    except subprocess.TimeoutExpired:
+        logging.error(f"Timeout occured on kill server {serverName}")
+    if proccess and proccess.poll() == None:
+        serverStatus[serverName]['text'] = "Killing"
+        logging.error(f"{serverName} sending terminate signal")
+        proccess.kill()
 
 def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
     time.sleep(delay)
@@ -251,12 +286,21 @@ def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
             stdin=subprocess.PIPE,
         ) as proc:
             openProcess[serverInfo.name] = proc
-            serverStatus[serverInfo.name] = "ON"
+            serverStatus[serverInfo.name]["text"] = "STARTING"
+            serverStatus[server.name]["stopping"] = False
+            startTimeoutThread = threading.Thread(
+                target=waitForServerStart, args=(serverInfo.name,), daemon=True
+            )
+            startTimeoutThread.start()
             # os.set_blocking(proc.stdout.fileno(), False)
             while proc.poll() == None:
                 try:
                     readline = proc.stdout.readline()
                     logging.debug(f"{serverInfo.name}: {readline}")
+                    if(serverStatus[serverInfo.name]["text"] == "STARTING"):
+                        if re.match(serverInfo.startedLine, readline):
+                            serverStatus[serverInfo]["text"] = "ON"
+
                     sendToAllListeningSockets(serverInfo.name, readline)
                 except Exception as e:
                     print(f"recieved exception {serverInfo.name} io: {str(e)}")
@@ -268,11 +312,12 @@ def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
                 f"{serverInfo.name} stopped with exit code {retCode}\n".encode(),
             )
             if (
-                serverStatus[serverInfo.name] == "STOPPING"
+                serverStatus[serverInfo.name]["stopping"]
             ):  # don't restart if shutting down was intentional
-                serverStatus[serverInfo.name] = "OFF"
+                serverStatus[serverInfo.name]["text"] = "OFF"
+                serverStatus[serverInfo.name]["stopping"] = False
                 break
-            serverStatus[serverInfo.name] = "OFF"
+            serverStatus[serverInfo.name]["text"] = "OFF"
 
 
 logging.basicConfig(level=logging.INFO)
@@ -285,7 +330,9 @@ for server in serverInfoList:
     serverInputLock[server.name] = threading.Lock()
     openSockets[server.name] = []
     serverInfoMap[server.name] = server
-    serverStatus[server.name] = "OFF"
+    serverStatus[server.name] = {}
+    serverStatus[server.name]["text"] = "OFF"
+    serverStatus[server.name]["stopping"] = False
     if server.start:
         startNewServer(server, startUpDelaySeconds*i)
         i +=1
