@@ -298,7 +298,7 @@ def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
                     readline = proc.stdout.readline()
                     logging.debug(f"{serverInfo.name}: {readline}")
                     if(serverStatus[serverInfo.name]["text"] == "STARTING"):
-                        if re.match(serverInfo.startedLine, readline):
+                        if re.match(serverInfo.startedLine, readline.decode()):
                             serverStatus[serverInfo]["text"] = "ON"
 
                     sendToAllListeningSockets(serverInfo.name, readline)
@@ -320,7 +320,7 @@ def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
             serverStatus[serverInfo.name]["text"] = "OFF"
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 serverInfoList = serverConfig.getServerConfigs("servers.json")
 serverInfoMap: "dict[str:serverConfig.ServerConfig]" = dict()
