@@ -112,7 +112,7 @@ class Server:
 
 class ServerWrapperServer(Server):
     def __init__(self, servicename) -> None:
-        super().__init__(servers.ServerConfig("ServerWrapper", "Server Wrapper", None, None, None, None))
+        super().__init__(servers.ServerConfig("ServerWrapper", "Server Wrapper", None, None, None, None, None))
         self.serviceName = servicename
 
     def updateStatus(self, serverStatus):
