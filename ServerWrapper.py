@@ -287,7 +287,7 @@ def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
         ) as proc:
             openProcess[serverInfo.name] = proc
             serverStatus[serverInfo.name]["text"] = "STARTING"
-            serverStatus[server.name]["stopping"] = False
+            serverStatus[serverInfo.name]["stopping"] = False
             startTimeoutThread = threading.Thread(
                 target=waitForServerStart, args=(serverInfo.name,), daemon=True
             )
@@ -299,7 +299,7 @@ def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
                     logging.debug(f"{serverInfo.name}: {readline}")
                     if(serverStatus[serverInfo.name]["text"] == "STARTING"):
                         if re.match(serverInfo.startedLine, readline.decode()):
-                            serverStatus[serverInfo]["text"] = "ON"
+                            serverStatus[serverInfo.name]["text"] = "ON"
 
                     sendToAllListeningSockets(serverInfo.name, readline)
                 except Exception as e:
@@ -320,7 +320,7 @@ def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
             serverStatus[serverInfo.name]["text"] = "OFF"
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 serverInfoList = serverConfig.getServerConfigs("servers.json")
 serverInfoMap: "dict[str:serverConfig.ServerConfig]" = dict()
