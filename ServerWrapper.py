@@ -162,7 +162,7 @@ class SocketHandler(socketserver.BaseRequestHandler):
         self.request.sendall(b"Restarting Servers\n")
 
     def getServerStatus(self, cmdArgs):
-        self.request.sendall(json.dumps(serverStatus['text']).encode())
+        self.request.sendall(json.dumps(serverStatus).encode())
 
     def launchServerConsole(self, cmdArgs):
         if len(cmdArgs) != 2:

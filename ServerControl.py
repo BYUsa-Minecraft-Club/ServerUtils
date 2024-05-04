@@ -73,10 +73,10 @@ class Server:
         # if(output.read().find("active (running)") > 0):
         if not self.serverConfig.name in serverStatus:
             serverStatus[self.serverConfig.name] = "Unknown"
-        self.serverStatusLabel.configure(text=serverStatus[self.serverConfig.name])
-        if(serverStatus[self.serverConfig.name] == "ON"):
+        self.serverStatusLabel.configure(text=serverStatus[self.serverConfig.name]["text"])
+        if(serverStatus[self.serverConfig.name]["text"] == "ON"):
             self.serverStatusLabel.configure(fg="green")
-        elif serverStatus[self.serverConfig.name] == "OFF":
+        elif serverStatus[self.serverConfig.name]["text"] == "OFF":
             self.serverStatusLabel.configure(fg="red")
         else:
             self.serverStatusLabel.config(fg="blue")
