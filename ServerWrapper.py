@@ -255,7 +255,7 @@ def waitForServerToStop(serverName):
 
 def waitForServerStart(serverName: str):
     time.sleep(startUpWaitTime)
-    if not serverStatus["text"] == "STARTING":
+    if not serverStatus[serverName]["text"] == "STARTING":
         return # all is well
     logging.error(f"{serverName} failed to start")
     proccess = openProcess[serverName]
