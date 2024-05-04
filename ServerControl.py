@@ -72,7 +72,7 @@ class Server:
        # output = os.popen(f"systemctl status {self.serviceName}")
         # if(output.read().find("active (running)") > 0):
         if not self.serverConfig.name in serverStatus:
-            serverStatus[self.serverConfig.name] = "Unknown"
+            serverStatus[self.serverConfig.name] = {"text":"Unknown"}
         self.serverStatusLabel.configure(text=serverStatus[self.serverConfig.name]["text"])
         if(serverStatus[self.serverConfig.name]["text"] == "ON"):
             self.serverStatusLabel.configure(fg="green")
