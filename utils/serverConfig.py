@@ -14,7 +14,7 @@ class ServerConfig:
     def getFromDict(cls, dict):
         start = dict["start"] if "start" in dict else True
         stopCmd = dict["stopCmd"] if "stopCmd" in dict else "/stop"
-        startedLine = dict["startedLine"] id "startedLine" in dict else ""
+        startedLine = dict["startedLine"] if "startedLine" in dict else r"\[\d+:\d+:\d+\] \[Server thread\/INFO\]: Maintenance mode is .*"
         return cls(dict["name"], dict["displayName"], dict["folder"], dict["launchCmd"], start, stopCmd, startedLine)
 
 def getServerConfigs(filename) -> 'list[ServerConfig]':
