@@ -334,6 +334,7 @@ for server in serverInfoList:
     serverStatus[server.name]["text"] = "OFF"
     serverStatus[server.name]["stopping"] = False
     if server.start:
+        serverStatus[server.name]["text"] = "Scheduled Start"
         startNewServer(server, startUpDelaySeconds*i)
         i +=1
         
