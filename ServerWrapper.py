@@ -44,12 +44,12 @@ def catchSigTerm(signmum, frame):
     for server in serverStatus:
         if serverStatus[server] != "OFF" :
             serverStatus[server]["stopping"] = True
-            if serverStatus[server] == "STARTING" or  serverStatus[server] == "ON":
+            if serverStatus[server]['text'] == "STARTING" or  serverStatus[server]['text'] == "ON":
                 sendStopCommand(server)
                 waitingThreads[server] = threading.Thread(
                     target=waitForServerToStop, args=(server,), daemon=True
                 )
-            serverStatus[server] = "STOPPING"
+            serverStatus[server]['text'] = "STOPPING"
             
             waitingThreads[server].start()
     for server in waitingThreads:
@@ -139,12 +139,12 @@ class SocketHandler(socketserver.BaseRequestHandler):
             if serverStatus[server]['text'] == "OFF":
                 raise InvalidCommandException(f"Cannot stop Server {server}: server already offline")
             serverStatus[server]["stopping"] = True
-            if serverStatus[server] == "STARTING" or  serverStatus[server] == "ON":
+            if serverStatus[server]['text'] == "STARTING" or  serverStatus[server]['text'] == "ON":
                 sendStopCommand(server)
                 threading.Thread(
                 target=waitForServerToStop, args=(server,), daemon=True
                 ).start()
-            serverStatus[server] = "STOPPING"
+            serverStatus[server]['text'] = "STOPPING"
             
         self.request.sendall(b"stopping server\n")
 
