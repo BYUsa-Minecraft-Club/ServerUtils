@@ -61,10 +61,10 @@ def main():
         status = getServerStatus()
         if args.server:
             for server in args.server:
-                print(f"{server}: {status[server]["text"]}")
+                print(f"{server}: {status[server]['text']}")
         else:
             for server in status:
-                print(f"{server}: {status[server]["text"]}")
+                print(f"{server}: {status[server]['text']}")
     elif operation == "console":
         if len(args.server) > 1:
             print("can only open terminal for one server at a time\n")
