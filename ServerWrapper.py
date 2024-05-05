@@ -37,7 +37,7 @@ wrapperStop = False
 def catchSigTerm(signmum, frame):
     logging.info("recieved Sig term")
     for server in serverStatus:
-        if serverStatus[server] != "OFF":
+        if serverStatus[server]['text'] == "STARTING" or  serverStatus[server]['text'] == "ON":
             writeToServer(server, b"/say Stoping Server\n")
     time.sleep(5)
     waitingThreads = {}
