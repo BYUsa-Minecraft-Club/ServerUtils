@@ -72,11 +72,11 @@ class Server:
        # output = os.popen(f"systemctl status {self.serviceName}")
         # if(output.read().find("active (running)") > 0):
         if not self.serverConfig.name in serverStatus:
-            serverStatus[self.serverConfig.name] = "Unknown"
-        self.serverStatusLabel.configure(text=serverStatus[self.serverConfig.name])
-        if(serverStatus[self.serverConfig.name] == "ON"):
+            serverStatus[self.serverConfig.name] = {"text":"Unknown"}
+        self.serverStatusLabel.configure(text=serverStatus[self.serverConfig.name]["text"])
+        if(serverStatus[self.serverConfig.name]["text"] == "ON"):
             self.serverStatusLabel.configure(fg="green")
-        elif serverStatus[self.serverConfig.name] == "OFF":
+        elif serverStatus[self.serverConfig.name]["text"] == "OFF":
             self.serverStatusLabel.configure(fg="red")
         else:
             self.serverStatusLabel.config(fg="blue")
@@ -112,7 +112,7 @@ class Server:
 
 class ServerWrapperServer(Server):
     def __init__(self, servicename) -> None:
-        super().__init__(servers.ServerConfig("ServerWrapper", "Server Wrapper", None, None, None, None))
+        super().__init__(servers.ServerConfig("ServerWrapper", "Server Wrapper", None, None, None, None, None))
         self.serviceName = servicename
 
     def updateStatus(self, serverStatus):
