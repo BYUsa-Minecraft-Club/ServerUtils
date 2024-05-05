@@ -278,9 +278,9 @@ def waitForServerStart(serverName: str):
         proccess.kill()
 
 def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
-    serverStatus[server.name]["text"] = "Scheduled Start"
+    serverStatus[serverInfo.name]["text"] = "Scheduled Start"
     time.sleep(delay)
-    if (serverStatus[server.name]["stopping"]):
+    if (serverStatus[serverInfo.name]["stopping"]):
         serverStatus[serverInfo.name]["text"] = "OFF"
         serverStatus[serverInfo.name]["stopping"] = False
         return # Server isn't supposed to start
