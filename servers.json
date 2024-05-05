@@ -3,41 +3,41 @@
         "name": "eden",
         "displayName": "Eden",
         "folder": "/home/byumc/BYU_Servers/Eden",
-        "launchCmd": "./start.sh",
+        "launchCmd": "java -Xmx8G -Djava.awt.headless=true -jar fabric-server-mc.1.20.4-loader.0.15.6-launcher.jar nogui",
         "start": true
     },
     {
         "name": "campus",
         "displayName": "Campus Creative",
         "folder": "/home/byumc/BYU_Servers/Campus",
-        "launchCmd": "./start.sh",
+        "launchCmd": "java -Xmx8G -Djava.awt.headless=true -jar fabric-server-mc.1.20.4-loader.0.15.6-launcher.jar nogui",
         "start": true
     },
     {
         "name": "babylon",
         "displayName": "Babylon",
         "folder": "/home/byumc/BYU_Servers/Babylon",
-        "launchCmd": "./start.sh",
+        "launchCmd": "java -Xmx8G -Djava.awt.headless=true -jar fabric-server-mc.1.20.4-loader.0.15.6-launcher.jar nogui",
         "start": true
     },
     {
         "name": "creative",
         "displayName": "Cosmo's Creative",
         "folder": "/home/byumc/BYU_Servers/Creative",
-        "launchCmd": "./start.sh",
+        "launchCmd": "java -Xmx8G -Djava.awt.headless=true -jar fabric-server-mc.1.20.4-loader.0.15.6-launcher.jar nogui",
         "start": true
     },
     {
         "name": "club1",
         "displayName": "Club World 1",
         "folder": "/home/byumc/BYU_Servers/Club1",
-        "launchCmd": "./start.sh",
+        "launchCmd": "java -Xmx8G -Djava.awt.headless=true -jar fabric-server-mc.1.20.4-loader.0.15.6-launcher.jar nogui",
         "start": false
     },
     {
         "name": "club2",
         "displayName": "Club World 2",
-        "folder": "/home/byumc/BYU_Servers/Club2",
+        "folder": "java -Xmx8G -Djava.awt.headless=true -jar fabric-server-mc.24w14potato-loader.0.15.9-launcher.1.0.0.jar nogui",
         "launchCmd": "./start.sh",
         "start": false
     }
