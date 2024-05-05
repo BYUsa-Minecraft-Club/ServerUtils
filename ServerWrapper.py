@@ -49,9 +49,10 @@ def catchSigTerm(signmum, frame):
                 waitingThreads[server] = threading.Thread(
                     target=waitForServerToStop, args=(server,), daemon=True
                 )
+                waitingThreads[server].start()
             serverStatus[server]['text'] = "STOPPING"
             
-            waitingThreads[server].start()
+            
     for server in waitingThreads:
         waitingThreads[server].join()
     exit(0)
