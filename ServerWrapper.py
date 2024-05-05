@@ -42,12 +42,15 @@ def catchSigTerm(signmum, frame):
     time.sleep(5)
     waitingThreads = {}
     for server in serverStatus:
-        if serverStatus[server] != "OFF":
+        if serverStatus[server] != "OFF" :
+            serverStatus[server]["stopping"] = True
+            if serverStatus[server] == "Starting" or  serverStatus[server] == "ON":
+                sendStopCommand(server)
+                waitingThreads[server] = threading.Thread(
+                    target=waitForServerToStop, args=(server,), daemon=True
+                )
             serverStatus[server] = "STOPPING"
-            sendStopCommand(server)
-            waitingThreads[server] = threading.Thread(
-                target=waitForServerToStop, args=(server,), daemon=True
-            )
+            
             waitingThreads[server].start()
     for server in waitingThreads:
         waitingThreads[server].join()
@@ -111,14 +114,13 @@ class SocketHandler(socketserver.BaseRequestHandler):
         if len(cmdArgs) > 1:
             serversToStart = cmdArgs[1:]
         else:
-            serversToStart = [x for x in serverStatus if serverStatus[x]['text'] == "OFF"]
+            serversToStart = [x for x in serverStatus if serverStatus[x]['text'] == "OFF" ]
 
         for server in serversToStart:
             if server not in serverStatus:
                 raise InvalidCommandException(f"unknown server: {server}")
             if serverStatus[server]['text'] != "OFF":
                 raise InvalidCommandException(f"Server {server} already started")
-            serverStatus[server]['text'] = "LAUNCHING"
             startNewServer(serverInfoMap[server])
         self.request.sendall(b"started server\n")
 
@@ -136,12 +138,14 @@ class SocketHandler(socketserver.BaseRequestHandler):
                 raise InvalidCommandException(f"unknown server: {server}")
             if serverStatus[server]['text'] == "OFF":
                 raise InvalidCommandException(f"Cannot stop Server {server}: server already offline")
-            serverStatus[server]['text'] = "STOPPING"
             serverStatus[server]["stopping"] = True
-            sendStopCommand(server)
-            threading.Thread(
+            if serverStatus[server] == "Starting" or  serverStatus[server] == "ON":
+                sendStopCommand(server)
+                threading.Thread(
                 target=waitForServerToStop, args=(server,), daemon=True
-            ).start()
+                ).start()
+            serverStatus[server] = "STOPPING"
+            
         self.request.sendall(b"stopping server\n")
 
     def restartServer(self, cmdArgs):
@@ -274,7 +278,12 @@ def waitForServerStart(serverName: str):
         proccess.kill()
 
 def launchServer(serverInfo: serverConfig.ServerConfig, delay=0):
+    serverStatus[server.name]["text"] = "Scheduled Start"
     time.sleep(delay)
+    if (serverStatus[server.name]["stopping"]):
+        serverStatus[serverInfo.name]["text"] = "OFF"
+        serverStatus[serverInfo.name]["stopping"] = False
+        return # Server isn't supposed to start
     while True:
         logging.info(f"launching server: {serverInfo.name}")
         with subprocess.Popen(
@@ -334,7 +343,6 @@ for server in serverInfoList:
     serverStatus[server.name]["text"] = "OFF"
     serverStatus[server.name]["stopping"] = False
     if server.start:
-        serverStatus[server.name]["text"] = "Scheduled Start"
         startNewServer(server, startUpDelaySeconds*i)
         i +=1
         
